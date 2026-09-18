@@ -37,6 +37,30 @@ interface Book {
   isNew?: boolean
 }
 
+// ── Persistence (localStorage) ─────────────────────────────────────────────
+const BOOKS_KEY = 'bookArchive.books.v1'
+const VIEW_KEY = 'bookArchive.view.v1'
+
+function loadBooks(): Book[] {
+  try {
+    const raw = localStorage.getItem(BOOKS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.map((b: Book) => ({ ...b, isNew: false })) : []
+  } catch { return [] }
+}
+
+function saveBooks(books: Book[]) {
+  try {
+    localStorage.setItem(BOOKS_KEY, JSON.stringify(books.map(({ isNew, ...rest }) => rest)))
+  } catch {
+    alert("Couldn't save your books: browser storage is full (large cover images can cause this). Try smaller cover images.")
+  }
+}
+
+function loadView(): ViewMode {
+  try { return localStorage.getItem(VIEW_KEY) === 'Spines' ? 'Spines' : 'Covers' } catch { return 'Covers' }
+}
 function formatDate(year: string, month: string, day: string) {
   if (!year) return ''
   if (!month) return year
@@ -679,14 +703,16 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
 
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [books, setBooks] = useState<Book[]>([])
+  const [books, setBooks] = useState<Book[]>(loadBooks)
   const [activeGenre, setActiveGenre] = useState<Genre>('All')
-  const [view, setView] = useState<ViewMode>('Covers')
+  const [view, setView] = useState<ViewMode>(loadView)
   const [showModal, setShowModal] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [editBook, setEditBook] = useState<Book | null>(null)
   const [hoveredSpineId, setHoveredSpineId] = useState<string | null>(null)
   const shelfRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { saveBooks(books) }, [books])
+useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view])
 
   const filteredBooks = activeGenre === 'All' ? books : books.filter(b => b.genre === activeGenre)
 
