@@ -129,7 +129,7 @@ function AnimatedCount({ count }: { count: number }) {
   useEffect(() => { setDisplay(count); setAnimKey(k => k + 1) }, [count])
   return (
     <span key={animKey} style={{ display: 'inline-block', animation: 'countChange 0.3s ease forwards', color: 'var(--accent)', fontSize: 12, letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
-      {display} {display === 1 ? 'volume' : 'volumes'}
+      {display} {display === 1 ? 'book' : 'books'}
     </span>
   )
 }
