@@ -744,13 +744,9 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
    const filteredBooks = sortBooks(activeGenre === 'All' ? books : books.filter(b => b.genre === activeGenre), sortOrder)
   const groups = groupByMonth(filteredBooks)
 
-  const scrollToGroup = (key: string, smooth = true) => {
-    const el = groupRefs.current[key]
-    const row = shelfRef.current
-    if (!el || !row) return
-    const left = el.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft - 40
-    row.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' })
-  }
+    const scrollToGroup = (key: string, smooth = true) => {
+    groupRefs.current[key]?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
+  }  
   const jumpToMonth = (key: string) => { setMonthKey(key); if (key) scrollToGroup(key) }
 
   // Return to the saved month when the By month view opens
@@ -849,13 +845,13 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
           {filteredBooks.length === 0 ? (
             <EmptyShelf genre={activeGenre} onAdd={() => setShowModal(true)} />
           ) : (
-            <div ref={shelfRef} style={{ overflowX: shelfOverflows ? 'auto' : 'visible', display: 'flex', gap: groupMode === 'month' ? 56 : view === 'Covers' ? 28 : 0, alignItems: 'flex-end', padding: `0 clamp(24px,5vw,64px) 0`, scrollbarWidth: 'thin' }}>
+            <div ref={shelfRef} style={{ overflowX: groupMode === 'month' ? 'visible' : shelfOverflows ? 'auto' : 'visible', display: 'flex', flexDirection: groupMode === 'month' ? 'column' : 'row', gap: groupMode === 'month' ? 56 : view === 'Covers' ? 28 : 0, alignItems: groupMode === 'month' ? 'stretch' : 'flex-end', padding: `0 clamp(24px,5vw,64px) 0`, scrollbarWidth: 'thin' }}>
                            {(groupMode === 'month' ? groups : [{ key: 'all', label: '', books: filteredBooks }]).map(g => (
-                <div key={g.key} ref={el => { groupRefs.current[g.key] = el }} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                <div key={g.key} ref={el => { groupRefs.current[g.key] = el }} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, scrollMarginTop: 24 }}>
                   {groupMode === 'month' && (
                     <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16, whiteSpace: 'nowrap' }}>{g.label}</div>
                   )}
-                  <div style={{ display: 'flex', gap: view === 'Covers' ? 28 : 0, alignItems: 'flex-end' }}>
+                  <div style={{ display: 'flex', flexWrap: groupMode === 'month' ? 'wrap' : 'nowrap', columnGap: view === 'Covers' ? 28 : 0, rowGap: groupMode === 'month' ? 32 : 0, alignItems: 'flex-end' }}>
                     {g.books.map(book => view === 'Covers'
                       ? <BookCard key={book.id} book={book} isNew={book.isNew} onSelect={() => setSelectedBook(book)} />
                       : <SpineCard key={book.id} book={book} isNew={book.isNew} onSelect={() => setSelectedBook(book)} hoveredId={hoveredSpineId} setHoveredId={setHoveredSpineId} />
