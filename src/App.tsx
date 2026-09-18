@@ -79,21 +79,40 @@ function wordCount(s: string) {
   return s.trim() ? s.trim().split(/\s+/).length : 0
 }
 
-// ── Open Library search ────────────────────────────────────────────────────
+// ── Book search (Google Books first, Open Library as backup) ───────────────
 interface SearchResult { key: string; title: string; author: string; year: string; coverUrl: string }
+
+async function searchGoogleBooks(query: string): Promise<SearchResult[]> {
+  const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&printType=books&fields=items(id,volumeInfo(title,authors,publishedDate,imageLinks/thumbnail))`)
+  if (!res.ok) throw new Error('google books failed')
+  const data = await res.json()
+  return (data.items || []).slice(0, 4).map((item: any) => ({
+    key: item.id as string,
+    title: (item.volumeInfo?.title as string) || '',
+    author: (item.volumeInfo?.authors as string[] | undefined)?.[0] || '',
+    year: String(item.volumeInfo?.publishedDate || '').slice(0, 4),
+    coverUrl: ((item.volumeInfo?.imageLinks?.thumbnail as string) || '').replace('http://', 'https://'),
+  }))
+}
+
+async function searchOpenLibrary(query: string): Promise<SearchResult[]> {
+  const res = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=4&fields=key,title,author_name,first_publish_year,cover_i`)
+  const data = await res.json()
+  return (data.docs || []).slice(0, 4).map((doc: Record<string, unknown>) => ({
+    key: doc.key as string, title: doc.title as string,
+    author: (doc.author_name as string[] | undefined)?.[0] || '',
+    year: String(doc.first_publish_year || ''),
+    coverUrl: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
+  }))
+}
 
 async function searchBooks(query: string): Promise<SearchResult[]> {
   if (!query.trim()) return []
   try {
-    const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=6&fields=key,title,author_name,first_publish_year,cover_i`)
-    const data = await res.json()
-    return (data.docs || []).slice(0, 4).map((doc: Record<string, unknown>) => ({
-      key: doc.key as string, title: doc.title as string,
-      author: (doc.author_name as string[] | undefined)?.[0] || '',
-      year: String(doc.first_publish_year || ''),
-      coverUrl: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
-    }))
-  } catch { return [] }
+    const r = await searchGoogleBooks(query)
+    if (r.length) return r
+  } catch { /* fall through to Open Library */ }
+  try { return await searchOpenLibrary(query) } catch { return [] }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
