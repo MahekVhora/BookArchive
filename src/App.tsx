@@ -238,7 +238,7 @@ function SpineCard({ book, onSelect, isNew, hoveredId, setHoveredId }: {
         <div style={{ position: 'absolute', top: 16, left: 6, right: 6, height: 1, background: lineColor }} />
         <div style={{ position: 'absolute', bottom: 20, left: 6, right: 6, height: 1, background: lineColor }} />
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontFamily: 'Cormorant Garamond, serif', fontSize: Math.min(15, w * 0.28), fontWeight: 500, color: textColor, letterSpacing: '0.03em', maxHeight: h - 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 4px' }}>{book.title}</div>
+          <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontFamily: 'Cormorant Garamond, serif', fontSize: Math.min(20, w * 0.36), fontWeight: 600, color: textColor, letterSpacing: '0.03em', maxHeight: h - 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 4px' }}>{book.title}</div>
         </div>
         {book.author && (
           <div style={{ position: 'absolute', bottom: 28, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
