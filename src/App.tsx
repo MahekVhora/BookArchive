@@ -150,7 +150,7 @@ function StarRating({ value, onChange, size = 20 }: { value: number; onChange?: 
 // ── FallbackCover ──────────────────────────────────────────────────────────
 function FallbackCover({ title, author, color, width, height }: { title: string; author: string; color: string; width: number; height: number }) {
   return (
-    <div style={{ width, height, background: color, borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '12px 8px', textAlign: 'center', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.4)', flexShrink: 0 }}>
+    <div style={{ width, height, background: color, borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '12px 8px', textAlign: 'center', position: 'relative', overflow: 'hidden', border: '1px solid var(--glass)', flexShrink: 0 }}>
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, background: 'linear-gradient(90deg,rgba(255,255,255,0.25),transparent)' }} />
       <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: width * 0.09, fontWeight: 500, color: '#3a2a22', lineHeight: 1.3, wordBreak: 'break-word' }}>{title}</span>
       {author && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: width * 0.065, color: 'rgba(60,40,30,0.7)', marginTop: 6 }}>{author}</span>}
@@ -187,7 +187,7 @@ function ReflectionTextarea({ value, onChange, minRows = 12, autoFocus }: {
           width: '100%',
           minHeight: minRows * 27,
           resize: 'none',
-          background: 'rgba(255,251,246,0.7)',
+          background: 'var(--paper)',
           border: '1px solid rgba(200,180,165,0.35)',
           borderRadius: 16,
           padding: 20,
@@ -267,7 +267,7 @@ function SpineCard({ book, onSelect, isNew, hoveredId, setHoveredId }: {
         )}
       </div>
       {isHovered && (
-        <div style={{ position: 'absolute', bottom: '110%', left: '50%', transform: 'translateX(-50%)', background: 'rgba(248,244,240,0.95)', backdropFilter: 'blur(12px)', border: '1px solid rgba(200,180,165,0.3)', borderRadius: 100, padding: '6px 14px', whiteSpace: 'nowrap', pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: 8, animation: 'fadeSlideIn 0.15s ease', zIndex: 20 }}>
+        <div style={{ position: 'absolute', bottom: '110%', left: '50%', transform: 'translateX(-50%)', background: 'var(--panel)', backdropFilter: 'blur(12px)', border: '1px solid rgba(200,180,165,0.3)', borderRadius: 100, padding: '6px 14px', whiteSpace: 'nowrap', pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: 8, animation: 'fadeSlideIn 0.15s ease', zIndex: 20 }}>
           <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{book.title}</span>
           {book.author && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'var(--text-muted)' }}>{book.author}</span>}
           {book.rating > 0 && <span style={{ fontSize: 11, color: '#c4956a' }}>{'★'.repeat(book.rating)}</span>}
@@ -307,9 +307,9 @@ function pillBtnStyle(variant: 'dark' | 'ghost' | 'glass'): React.CSSProperties 
   const base: React.CSSProperties = { borderRadius: 100, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase' as const, fontWeight: 500, transition: 'all 0.2s ease', border: 'none', outline: 'none' }
   if (variant === 'dark') return { ...base, background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)', padding: '12px 28px' }
   if (variant === 'ghost') return { ...base, background: 'transparent', color: 'var(--text)', padding: '10px 22px', border: '1px solid var(--border)' }
-  return { ...base, background: 'rgba(255,255,255,0.4)', color: 'var(--text)', padding: '10px 22px', border: '1px solid rgba(200,180,165,0.3)', backdropFilter: 'blur(8px)' }
+  return { ...base, background: 'var(--glass)', color: 'var(--text)', padding: '10px 22px', border: '1px solid rgba(200,180,165,0.3)', backdropFilter: 'blur(8px)' }
 }
-const inputStyle: React.CSSProperties = { width: '100%', background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(200,180,165,0.35)', borderRadius: 10, padding: '9px 13px', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'var(--text)', outline: 'none' }
+const inputStyle: React.CSSProperties = { width: '100%', background: 'var(--field)', border: '1px solid rgba(200,180,165,0.35)', borderRadius: 10, padding: '9px 13px', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'var(--text)', outline: 'none' }
 const labelStyle: React.CSSProperties = { display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 5 }
 const serifLabelStyle: React.CSSProperties = { display: 'block', fontFamily: 'Cormorant Garamond, serif', fontSize: 16, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }
 
@@ -346,12 +346,12 @@ function GlassSelect({ value, onChange, options, placeholder, widthPct }: {
 
   return (
     <div ref={ref} style={{ position: 'relative', width: widthPct, flexShrink: 0 }}>
-      <button type="button" onClick={() => setOpen(o => !o)} style={{ width: '100%', height: 44, background: 'rgba(255,255,255,0.55)', border: `1px solid ${open ? 'rgba(180,140,110,0.5)' : 'rgba(200,180,165,0.35)'}`, borderRadius: 12, padding: '0 36px 0 13px', fontFamily: 'Inter, sans-serif', fontSize: 13, color: displayValue ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', boxShadow: open ? '0 0 0 3px rgba(180,150,130,0.18)' : 'none', transition: 'box-shadow 0.15s, border-color 0.15s', outline: 'none' }}>
+      <button type="button" onClick={() => setOpen(o => !o)} style={{ width: '100%', height: 44, background: 'var(--field)', border: `1px solid ${open ? 'rgba(180,140,110,0.5)' : 'rgba(200,180,165,0.35)'}`, borderRadius: 12, padding: '0 36px 0 13px', fontFamily: 'Inter, sans-serif', fontSize: 13, color: displayValue ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', boxShadow: open ? '0 0 0 3px rgba(180,150,130,0.18)' : 'none', transition: 'box-shadow 0.15s, border-color 0.15s', outline: 'none' }}>
         {displayValue || placeholder}
       </button>
       <span style={{ position: 'absolute', right: 12, top: '50%', transform: `translateY(-50%) rotate(${open ? 180 : 0}deg)`, transition: 'transform 0.2s', fontSize: 10, color: 'var(--text-muted)', pointerEvents: 'none' }}>▾</span>
       {open && (
-        <div ref={listRef} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50, background: 'rgba(248,244,240,0.97)', backdropFilter: 'blur(20px)', border: '1px solid rgba(200,180,165,0.3)', borderRadius: 12, maxHeight: 220, overflowY: 'auto', boxShadow: '0 12px 32px rgba(0,0,0,0.12)', scrollbarWidth: 'thin' }}>
+        <div ref={listRef} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50, background: 'var(--panel)', backdropFilter: 'blur(20px)', border: '1px solid rgba(200,180,165,0.3)', borderRadius: 12, maxHeight: 220, overflowY: 'auto', boxShadow: '0 12px 32px rgba(0,0,0,0.12)', scrollbarWidth: 'thin' }}>
           {options.map((opt, i) => {
             const label = placeholder === 'Month' ? MONTHS[parseInt(opt)-1] : opt
             const isSel = opt === value
@@ -446,7 +446,7 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(30,20,15,0.4)', backdropFilter: 'blur(6px)' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(248,244,240,0.96)', backdropFilter: 'blur(24px)', borderRadius: 24, width: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.22)', position: 'relative', animation: 'modalIn 0.28s ease' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--panel)', backdropFilter: 'blur(24px)', borderRadius: 24, width: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.22)', position: 'relative', animation: 'modalIn 0.28s ease' }}>
 
         {/* Pinned header */}
         <div style={{ padding: '32px 36px 0', flexShrink: 0 }}>
@@ -474,7 +474,7 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
                   <input placeholder="Search by title or author" value={query} onChange={e => handleQueryChange(e.target.value)} style={inputStyle} autoFocus />
                   {searching && <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--text-muted)' }}>…</div>}
                   {showResults && results.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'rgba(248,244,240,0.98)', border: '1px solid var(--border)', borderRadius: 10, zIndex: 10, overflow: 'hidden', marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 10, zIndex: 10, overflow: 'hidden', marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                       {results.map(r => (
                         <div key={r.key} onClick={() => pickResult(r)} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(200,180,165,0.15)', transition: 'background 0.15s' }}
                           onMouseEnter={e => (e.currentTarget.style.background='rgba(200,180,165,0.15)')}
@@ -588,7 +588,7 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
       {/* Panel */}
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0, width: 560, zIndex: 101,
-        background: 'rgba(247,242,237,0.97)', backdropFilter: 'blur(28px)',
+        background: 'var(--panel)', backdropFilter: 'blur(28px)',
         borderRadius: '24px 0 0 24px',
         boxShadow: '-8px 0 48px rgba(0,0,0,0.18)',
         display: 'flex', flexDirection: 'column',
@@ -659,7 +659,7 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
                     {book.reflection}
                   </div>
                   {!reflExpanded && (
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(transparent, rgba(247,242,237,0.97))', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(transparent, var(--panel))', pointerEvents: 'none' }} />
                   )}
                 </div>
                 <button onClick={() => setReflExpanded(e => !e)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'var(--accent)', marginTop: 8, display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'underline' }}>
@@ -707,7 +707,7 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
 // ── ViewToggle ─────────────────────────────────────────────────────────────
 function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
   return (
-    <div style={{ display: 'flex', background: 'rgba(255,255,255,0.35)', border: '1px solid rgba(200,180,165,0.3)', borderRadius: 100, height: 36, padding: 3, gap: 2, backdropFilter: 'blur(8px)', flexShrink: 0 }}>
+    <div style={{ display: 'flex', background: 'var(--glass)', border: '1px solid rgba(200,180,165,0.3)', borderRadius: 100, height: 36, padding: 3, gap: 2, backdropFilter: 'blur(8px)', flexShrink: 0 }}>
       {(['Covers','Spines'] as ViewMode[]).map(v => (
         <button key={v} onClick={() => onChange(v)} style={{ height: '100%', padding: '0 14px', borderRadius: 100, border: 'none', cursor: 'pointer', background: view === v ? 'var(--chip-active-bg)' : 'transparent', color: view === v ? 'var(--chip-active-text)' : 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 5 }}>
           {v === 'Covers'
@@ -732,6 +732,17 @@ export default function App() {
   const [hoveredSpineId, setHoveredSpineId] = useState<string | null>(null)
   const shelfRef = useRef<HTMLDivElement>(null)
     const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = loadPref('bookArchive.theme.v1', '')
+    if (saved === 'dark' || saved === 'light') return saved
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+  useEffect(() => { document.documentElement.setAttribute('data-theme', theme) }, [theme])
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    savePref('bookArchive.theme.v1', next)
+  }
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => loadPref('bookArchive.sort.v1', 'newest') === 'oldest' ? 'oldest' : 'newest')
   const [groupMode, setGroupMode] = useState<'shelf' | 'month'>(() => loadPref('bookArchive.group.v1', 'shelf') === 'month' ? 'month' : 'shelf')
   const [monthKey, setMonthKey] = useState<string>(() => loadPref('bookArchive.month.v1', ''))
@@ -805,14 +816,21 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
             </h1>
             <AnimatedCount count={books.length} />
           </div>
-          <button onClick={() => setShowModal(true)} style={{ ...pillBtnStyle('glass'), marginTop: 16, whiteSpace: 'nowrap', flexShrink: 0 }}>+ Add a book</button>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, flexShrink: 0 }}>
+            <button onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--border)', background: 'var(--glass)', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+              {theme === 'dark'
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>}
+            </button>
+            <button onClick={() => setShowModal(true)} style={{ ...pillBtnStyle('glass'), whiteSpace: 'nowrap', flexShrink: 0 }}>+ Add a book</button>
+          </div>
         </header>
 
         {/* ── Filter bar + view toggle ── */}
         <div style={{ padding: '0 clamp(24px,5vw,64px) 28px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ overflowX: 'auto', display: 'flex', gap: 8, scrollbarWidth: 'none', flex: 1 }}>
             {GENRES.map(g => (
-              <button key={g} onClick={() => setActiveGenre(g)} style={{ ...pillBtnStyle(activeGenre === g ? 'dark' : 'glass'), padding: '8px 18px', flexShrink: 0, opacity: books.length === 0 ? 0.4 : 1, background: activeGenre === g ? 'var(--chip-active-bg)' : 'rgba(255,255,255,0.35)', color: activeGenre === g ? 'var(--chip-active-text)' : 'var(--text)' }}>{g}</button>
+              <button key={g} onClick={() => setActiveGenre(g)} style={{ ...pillBtnStyle(activeGenre === g ? 'dark' : 'glass'), padding: '8px 18px', flexShrink: 0, opacity: books.length === 0 ? 0.4 : 1, background: activeGenre === g ? 'var(--chip-active-bg)' : 'var(--glass)', color: activeGenre === g ? 'var(--chip-active-text)' : 'var(--text)' }}>{g}</button>
             ))}
           </div>
           <ViewToggle view={view} onChange={setView} />
@@ -831,7 +849,7 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
               <select
                 value={groups.some(g => g.key === monthKey) ? monthKey : ''}
                 onChange={e => jumpToMonth(e.target.value)}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text)', background: 'rgba(255,255,255,0.35)', border: '1px solid var(--border)', borderRadius: 999, padding: '6px 14px', outline: 'none' }}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text)', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: 999, padding: '6px 14px', outline: 'none' }}
               >
                 <option value="">Jump to month…</option>
                 {groups.map(g => <option key={g.key} value={g.key}>{g.label}</option>)}
