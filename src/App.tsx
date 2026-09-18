@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { sortBooks, groupByMonth, loadPref, savePref, type SortOrder } from './lib/shelf'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Genre = 'All' | 'Nonfiction' | 'Fiction' | 'Sci-Fi' | 'Mystery & Thriller' | 'Fantasy' | 'Romance' | 'History'
@@ -730,11 +731,35 @@ export default function App() {
   const [editBook, setEditBook] = useState<Book | null>(null)
   const [hoveredSpineId, setHoveredSpineId] = useState<string | null>(null)
   const shelfRef = useRef<HTMLDivElement>(null)
+    const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const [sortOrder, setSortOrder] = useState<SortOrder>(() => loadPref('bookArchive.sort.v1', 'newest') === 'oldest' ? 'oldest' : 'newest')
+  const [groupMode, setGroupMode] = useState<'shelf' | 'month'>(() => loadPref('bookArchive.group.v1', 'shelf') === 'month' ? 'month' : 'shelf')
+  const [monthKey, setMonthKey] = useState<string>(() => loadPref('bookArchive.month.v1', ''))
   useEffect(() => { saveBooks(books) }, [books])
 useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view])
+    useEffect(() => { savePref('bookArchive.sort.v1', sortOrder) }, [sortOrder])
+  useEffect(() => { savePref('bookArchive.group.v1', groupMode) }, [groupMode])
+  useEffect(() => { savePref('bookArchive.month.v1', monthKey) }, [monthKey])
 
-  const filteredBooks = activeGenre === 'All' ? books : books.filter(b => b.genre === activeGenre)
+   const filteredBooks = sortBooks(activeGenre === 'All' ? books : books.filter(b => b.genre === activeGenre), sortOrder)
+  const groups = groupByMonth(filteredBooks)
 
+  const scrollToGroup = (key: string, smooth = true) => {
+    const el = groupRefs.current[key]
+    const row = shelfRef.current
+    if (!el || !row) return
+    const left = el.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft - 40
+    row.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' })
+  }
+  const jumpToMonth = (key: string) => { setMonthKey(key); if (key) scrollToGroup(key) }
+
+  // Return to the saved month when the By month view opens
+  useEffect(() => {
+    if (groupMode !== 'month' || !monthKey) return
+    const t = setTimeout(() => scrollToGroup(monthKey, false), 150)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupMode, view])
   const addBook = useCallback((data: Omit<Book, 'id' | 'offset' | 'isNew' | 'spineWidth' | 'spineHeight' | 'spineLean'>) => {
     const newBook: Book = {
       ...data, id: crypto.randomUUID(),
@@ -763,7 +788,7 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
     setSelectedBook(prev => prev?.id === id ? { ...prev, reflection: text, reflectionEditedAt: editedAt } : prev)
   }
 
-  const shelfOverflows = filteredBooks.length * (view === 'Covers' ? 228 : 66) > (typeof window !== 'undefined' ? window.innerWidth : 1200)
+  const shelfOverflows = filteredBooks.length * (view === 'Covers' ? 228 : 66) > (typeof window !== 'undefined' ? window.innerWidth : 1200)|| groupMode === 'month'
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
@@ -797,16 +822,47 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
           <ViewToggle view={view} onChange={setView} />
         </div>
 
+                {/* ── Sort + By month ── */}
+        {books.length > 0 && (
+          <div style={{ padding: '0 clamp(24px,5vw,64px) 20px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button onClick={() => setSortOrder(o => o === 'newest' ? 'oldest' : 'newest')} style={{ ...pillBtnStyle('glass'), padding: '6px 14px', fontSize: 12 }}>
+              {sortOrder === 'newest' ? 'Newest first ↓' : 'Oldest first ↑'}
+            </button>
+            <button onClick={() => setGroupMode(m => m === 'month' ? 'shelf' : 'month')} style={{ ...pillBtnStyle(groupMode === 'month' ? 'dark' : 'glass'), padding: '6px 14px', fontSize: 12 }}>
+              By month
+            </button>
+            {groupMode === 'month' && (
+              <select
+                value={groups.some(g => g.key === monthKey) ? monthKey : ''}
+                onChange={e => jumpToMonth(e.target.value)}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text)', background: 'rgba(255,255,255,0.35)', border: '1px solid var(--border)', borderRadius: 999, padding: '6px 14px', outline: 'none' }}
+              >
+                <option value="">Jump to month…</option>
+                {groups.map(g => <option key={g.key} value={g.key}>{g.label}</option>)}
+              </select>
+            )}
+          </div>
+        )}
+        
         {/* ── Shelf ── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
           {filteredBooks.length === 0 ? (
             <EmptyShelf genre={activeGenre} onAdd={() => setShowModal(true)} />
           ) : (
-            <div ref={shelfRef} style={{ overflowX: shelfOverflows ? 'auto' : 'visible', display: 'flex', gap: view === 'Covers' ? 28 : 0, alignItems: 'flex-end', padding: `0 clamp(24px,5vw,64px) 0`, scrollbarWidth: 'thin' }}>
-              {view === 'Covers'
-                ? filteredBooks.map(book => <BookCard key={book.id} book={book} isNew={book.isNew} onSelect={() => setSelectedBook(book)} />)
-                : filteredBooks.map(book => <SpineCard key={book.id} book={book} isNew={book.isNew} onSelect={() => setSelectedBook(book)} hoveredId={hoveredSpineId} setHoveredId={setHoveredSpineId} />)
-              }
+            <div ref={shelfRef} style={{ overflowX: shelfOverflows ? 'auto' : 'visible', display: 'flex', gap: groupMode === 'month' ? 56 : view === 'Covers' ? 28 : 0, alignItems: 'flex-end', padding: `0 clamp(24px,5vw,64px) 0`, scrollbarWidth: 'thin' }}>
+                           {(groupMode === 'month' ? groups : [{ key: 'all', label: '', books: filteredBooks }]).map(g => (
+                <div key={g.key} ref={el => { groupRefs.current[g.key] = el }} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                  {groupMode === 'month' && (
+                    <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16, whiteSpace: 'nowrap' }}>{g.label}</div>
+                  )}
+                  <div style={{ display: 'flex', gap: view === 'Covers' ? 28 : 0, alignItems: 'flex-end' }}>
+                    {g.books.map(book => view === 'Covers'
+                      ? <BookCard key={book.id} book={book} isNew={book.isNew} onSelect={() => setSelectedBook(book)} />
+                      : <SpineCard key={book.id} book={book} isNew={book.isNew} onSelect={() => setSelectedBook(book)} hoveredId={hoveredSpineId} setHoveredId={setHoveredSpineId} />
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
