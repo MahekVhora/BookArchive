@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { sortBooks, groupByMonth, loadPref, savePref, type SortOrder } from './lib/shelf'
+import { pickPaletteColor, isDarkColor, extractCoverColor, peekCoverColor } from './lib/color'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Genre = 'All' | 'Nonfiction' | 'Fiction' | 'Sci-Fi' | 'Mystery & Thriller' | 'Fantasy' | 'Romance' | 'History'
@@ -244,8 +245,14 @@ function SpineCard({ book, onSelect, isNew, hoveredId, setHoveredId }: {
 }) {
   const isHovered = hoveredId === book.id
   const isDimmed = hoveredId !== null && !isHovered
-  const spineColor = GENRE_SPINE_COLORS[book.genre]
-  const isDark = spineColor.startsWith('#7') || spineColor.startsWith('#6') || spineColor.startsWith('#5')
+    const [coverTint, setCoverTint] = useState<string | null>(() => peekCoverColor(book.coverUrl) ?? null)
+  useEffect(() => {
+    let alive = true
+    extractCoverColor(book.coverUrl).then(c => { if (alive) setCoverTint(c) })
+    return () => { alive = false }
+  }, [book.coverUrl])
+  const spineColor = coverTint || pickPaletteColor(book.id)
+  const isDark = isDarkColor(spineColor)
   const textColor = isDark ? 'rgba(255,255,255,0.9)' : 'rgba(50,30,25,0.85)'
   const lineColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(50,30,25,0.2)'
   const w = book.spineWidth, h = book.spineHeight
@@ -253,7 +260,7 @@ function SpineCard({ book, onSelect, isNew, hoveredId, setHoveredId }: {
   return (
     <div onClick={onSelect} onMouseEnter={() => setHoveredId(book.id)} onMouseLeave={() => setHoveredId(null)}
       style={{ position: 'relative', flexShrink: 0, cursor: 'pointer', width: w, height: h, transform: `${isHovered ? 'translateY(-24px) scale(1.04)' : 'translateY(0) scale(1)'} rotate(${book.spineLean}deg)`, transition: 'transform 0.25s ease, opacity 0.25s ease, filter 0.25s ease', opacity: isDimmed ? 0.7 : 1, animation: isNew ? 'slideLeft 0.4s ease forwards' : undefined, zIndex: isHovered ? 10 : 1, marginRight: 2, filter: isDimmed ? 'brightness(0.85)' : 'brightness(1)' }}>
-      <div style={{ position: 'absolute', inset: 0, background: spineColor, borderRadius: '3px 3px 0 0', boxShadow: isHovered ? `4px 0 20px rgba(0,0,0,0.3), 0 0 20px ${spineColor}80` : '2px 0 8px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, background: spineColor, transition: 'background 0.4s ease', borderRadius: '3px 3px 0 0', boxShadow: isHovered ? `4px 0 20px rgba(0,0,0,0.3), 0 0 20px ${spineColor}80` : '2px 0 8px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '40%', background: 'linear-gradient(90deg,rgba(255,255,255,0.2),transparent)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: 16, left: 6, right: 6, height: 1, background: lineColor }} />
         <div style={{ position: 'absolute', bottom: 20, left: 6, right: 6, height: 1, background: lineColor }} />
