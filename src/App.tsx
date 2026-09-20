@@ -656,7 +656,7 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
           {/* ── Reflection section ── */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em' textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 500 }}>My Reflection</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 500 }}>My Reflection</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {reflEditedAt && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'var(--text-muted)' }}>Last edited {reflEditedAt}</span>}
                 {reflExpanded && !reflEditMode && book.reflection && (
