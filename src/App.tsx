@@ -1,6 +1,26 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { sortBooks, groupByMonth, loadPref, savePref, type SortOrder } from './lib/shelf'
 import { pickPaletteColor, isDarkColor, extractCoverColor, peekCoverColor } from './lib/color'
+function useIsMobile(breakpoint = 640) {
+  const query = `(max-width: ${breakpoint}px)`
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const onChange = () => setIsMobile(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [query])
+  return isMobile
+}
+
+function useLockBodyScroll() {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Genre = 'All' | 'Nonfiction' | 'Fiction' | 'Sci-Fi' | 'Mystery & Thriller' | 'Fantasy' | 'Romance' | 'History'
@@ -217,7 +237,9 @@ function ReflectionTextarea({ value, onChange, minRows = 12, autoFocus }: {
 // ── BookCard (Covers view) ─────────────────────────────────────────────────
 function BookCard({ book, onSelect, isNew }: { book: Book; onSelect: () => void; isNew?: boolean }) {
   const [hovered, setHovered] = useState(false)
-  const w = 200, h = 300
+    const isMobile = useIsMobile()
+  const w = isMobile ? 150 : 200, h = isMobile ? 225 : 300
+  const showInfo = hovered || isMobile
   return (
     <div onClick={onSelect} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', marginTop: book.offset, flexShrink: 0, animation: isNew ? 'slideLeft 0.4s ease forwards' : undefined, transition: 'transform 0.25s ease', transform: hovered ? 'translateY(-12px) scale(1.06)' : 'none', zIndex: hovered ? 10 : 1 }}>
@@ -229,7 +251,7 @@ function BookCard({ book, onSelect, isNew }: { book: Book; onSelect: () => void;
         )}
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, background: 'linear-gradient(90deg,rgba(255,255,255,0.25),transparent)', borderRadius: '4px 0 0 4px', pointerEvents: 'none' }} />
       </div>
-      <div style={{ marginTop: 10, textAlign: 'center', maxWidth: w, opacity: hovered ? 1 : 0, transform: hovered ? 'translateY(0)' : 'translateY(4px)', transition: 'opacity 0.2s ease, transform 0.2s ease', pointerEvents: 'none' }}>
+      <div style={{ marginTop: 10, textAlign: 'center', maxWidth: w, opacity: showInfo ? 1 : 0, transform: showInfo ? 'translateY(0)' : 'translateY(4px)', transition: 'opacity 0.2s ease, transform 0.2s ease', pointerEvents: 'none' }}>
         <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 14, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{book.title}</div>
         <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{book.author}</div>
         {book.dateYear && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'var(--text-muted)', marginTop: 2, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{formatDate(book.dateYear, book.dateMonth, book.dateDay)}</div>}
@@ -424,7 +446,9 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
   const [coverUrl, setCoverUrl] = useState(initialBook?.coverUrl || '')
   const [coverColor] = useState(initialBook?.coverColor || nextPastel())
 
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>()
+    const isMobile = useIsMobile()
+  useLockBodyScroll()
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const bodyRef = useRef<HTMLDivElement>(null)
 
   const handleQueryChange = (q: string) => {
@@ -449,23 +473,24 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
     onAdd({ title: title.trim(), author, genre, dateYear, dateMonth, dateDay, rating, reflection, reflectionEditedAt: reflection ? todayLabel() : '', coverUrl, coverColor })
   }
 
-  const previewW = 140, previewH = 210
+  const previewW = isMobile ? 110 : 140, previewH = isMobile ? 165 : 210
+  const padX = isMobile ? 20 : 36
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(30,20,15,0.4)', backdropFilter: 'blur(6px)' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--panel)', backdropFilter: 'blur(24px)', borderRadius: 24, width: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.22)', position: 'relative', animation: 'modalIn 0.28s ease' }}>
-
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', background: 'rgba(30,20,15,0.4)', backdropFilter: 'blur(6px)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--panel)', backdropFilter: 'blur(24px)', borderRadius: isMobile ? '24px 24px 0 0' : 24, width: '100%', maxWidth: 640, maxHeight: isMobile ? '94dvh' : '90dvh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.22)', position: 'relative', animation: 'modalIn 0.28s ease', overflow: 'hidden' }}>
         {/* Pinned header */}
-        <div style={{ padding: '32px 36px 0', flexShrink: 0 }}>
+        <div style={{ padding: isMobile ? '24px 20px 0' : '32px 36px 0', flexShrink: 0 }}>
           <button onClick={onClose} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text-muted)', lineHeight: 1 }}>×</button>
-          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 28, fontWeight: 500, marginBottom: 24, color: 'var(--text)' }}>{initialBook ? 'Edit book' : 'Add a book'}</div>
+          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 28, fontWeight: 500, marginBottom: isMobile ? 16 : 24, color: 'var(--text)' }}>{initialBook ? 'Edit book' : 'Add a book'}</div>
         </div>
 
         {/* Scrollable body */}
-        <div ref={bodyRef} style={{ overflowY: 'auto', padding: '0 36px', flex: 1, scrollbarWidth: 'thin' }}>
-          <div style={{ display: 'flex', gap: 24 }}>
+        <div ref={bodyRef} style={{ overflowY: 'auto', overflowX: 'hidden', padding: `0 ${padX}px`, flex: 1, minHeight: 0, scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : undefined, gap: isMobile ? 20 : 24 }}>
             {/* Preview */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0, alignSelf: isMobile ? 'center' : undefined }}>
+              {coverUrl ? (
               {coverUrl ? (
                 <img src={coverUrl} alt="preview" style={{ width: previewW, height: previewH, objectFit: 'cover', borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }} />
               ) : (
@@ -475,8 +500,8 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
             </div>
 
             {/* Fields */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {!manual && (
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {!manual
                 <div style={{ position: 'relative' }}>
                   <input placeholder="Search by title or author" value={query} onChange={e => handleQueryChange(e.target.value)} style={inputStyle} autoFocus />
                   {searching && <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--text-muted)' }}>…</div>}
@@ -525,7 +550,7 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
         </div>
 
         {/* Pinned footer */}
-        <div style={{ padding: '20px 36px 28px', flexShrink: 0, display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid rgba(200,180,165,0.15)' }}>
+        <div style={{ padding: isMobile ? '14px 20px calc(16px + env(safe-area-inset-bottom, 0px))' : '20px 36px 28px', flexShrink: 0, display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid rgba(200,180,165,0.15)' }}>
           <button onClick={onClose} style={{ ...pillBtnStyle('ghost'), padding: '11px 24px' }}>Cancel</button>
           <button onClick={handleSubmit} disabled={!title.trim()} style={{ ...pillBtnStyle('dark'), padding: '11px 28px', opacity: title.trim() ? 1 : 0.4, cursor: title.trim() ? 'pointer' : 'not-allowed' }}>
             {initialBook ? 'Save changes' : 'Add to shelf'}
@@ -540,7 +565,7 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
 function SavedToast({ visible }: { visible: boolean }) {
   return (
     <div style={{
-      position: 'fixed', bottom: 32, left: '50%', transform: `translateX(-50%) translateY(${visible ? 0 : 16}px)`,
+      position: 'fixed', bottom: 'calc(32px + env(safe-area-inset-bottom, 0px))', left: '50%', transform: `translateX(-50%) translateY(${visible ? 0 : 16}px)`,
       opacity: visible ? 1 : 0, transition: 'opacity 0.3s ease, transform 0.3s ease',
       background: 'rgba(50,35,25,0.92)', color: '#f5f0eb', borderRadius: 100,
       padding: '10px 20px', fontFamily: 'Inter, sans-serif', fontSize: 12, letterSpacing: '0.06em',
@@ -567,6 +592,8 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
   const [showToast, setShowToast] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const isMobile = useIsMobile()
+  useLockBodyScroll()
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
 
@@ -582,7 +609,7 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
 
   const cancelEdit = () => { setReflDraft(book.reflection); setReflEditMode(false) }
 
-  const cw = 140, ch = 210
+  const cw = isMobile ? 110 : 140, ch = isMobile ? 165 : 210
   const COLLAPSED_LINES = 5
   const lineH = 27
   const collapsedH = COLLAPSED_LINES * lineH
@@ -594,28 +621,28 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
 
       {/* Panel */}
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 560, zIndex: 101,
+                position: 'fixed', zIndex: 101,
+        ...(isMobile
+          ? { left: 0, right: 0, bottom: 0, maxHeight: '90dvh', borderRadius: '24px 24px 0 0', boxShadow: '0 -8px 48px rgba(0,0,0,0.18)', transform: mounted ? 'translateY(0)' : 'translateY(100%)' }
+          : { top: 0, right: 0, bottom: 0, width: 560, maxWidth: '100%', borderRadius: '24px 0 0 24px', boxShadow: '-8px 0 48px rgba(0,0,0,0.18)', transform: mounted ? 'translateX(0)' : 'translateX(100%)' }),
         background: 'var(--panel)', backdropFilter: 'blur(28px)',
-        borderRadius: '24px 0 0 24px',
-        boxShadow: '-8px 0 48px rgba(0,0,0,0.18)',
         display: 'flex', flexDirection: 'column',
-        transform: mounted ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform 0.35s cubic-bezier(0.32,0,0.1,1)',
         overflowY: 'auto', scrollbarWidth: 'thin',
       }}>
         {/* Close */}
         <button onClick={onClose} style={{ position: 'sticky', top: 16, left: 'calc(100% - 52px)', display: 'block', marginLeft: 'auto', marginRight: 20, background: 'rgba(200,185,170,0.25)', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text-muted)', width: 32, height: 32, borderRadius: 100, lineHeight: '32px', textAlign: 'center', flexShrink: 0, zIndex: 10 }}>×</button>
 
-        <div style={{ padding: '0 36px 40px', marginTop: -32 }}>
+        <div style={{ padding: isMobile ? '0 20px calc(28px + env(safe-area-inset-bottom, 0px))' : '0 36px 40px', marginTop: -32 }}>
           {/* ── Top: cover + meta ── */}
-          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', paddingTop: 40 }}>
+          <div style={{ display: 'flex', gap: isMobile ? 16 : 24, alignItems: 'flex-start', paddingTop: 40 }}>
             {book.coverUrl ? (
               <img src={book.coverUrl} alt={book.title} style={{ width: cw, height: ch, objectFit: 'cover', borderRadius: 4, flexShrink: 0, boxShadow: '0 12px 28px rgba(0,0,0,0.2)' }} onError={e => (e.target as HTMLImageElement).style.display='none'} />
             ) : (
               <FallbackCover title={book.title} author={book.author} color={book.coverColor} width={cw} height={ch} />
             )}
-            <div style={{ flex: 1, paddingTop: 4 }}>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 28, fontWeight: 500, color: 'var(--text)', lineHeight: 1.2, marginBottom: 8 }}>{book.title}</div>
+            <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: isMobile ? 24 : 28, wordBreak: 'break-word', fontWeight: 500, color: 'var(--text)', lineHeight: 1.2, marginBottom: 8 }}>{book.title}</div>
               {book.author && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>{book.author}</div>}
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', background: 'rgba(180,100,80,0.1)', padding: '4px 12px', borderRadius: 100, display: 'inline-block', marginBottom: 14 }}>{book.genre}</span>
               {book.dateYear && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>{formatDate(book.dateYear, book.dateMonth, book.dateDay)}</div>}
@@ -628,8 +655,8 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
 
           {/* ── Reflection section ── */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 500 }}>My Reflection</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em' textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 500 }}>My Reflection</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {reflEditedAt && <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'var(--text-muted)' }}>Last edited {reflEditedAt}</span>}
                 {reflExpanded && !reflEditMode && book.reflection && (
@@ -697,7 +724,7 @@ function BookDetailPanel({ book, onClose, onRemove, onEditDetails, onSaveReflect
               <button onClick={() => setConfirmRemove(true)} style={{ ...pillBtnStyle('ghost'), padding: '10px 20px', fontSize: 11, color: '#b05050', borderColor: 'rgba(180,80,80,0.25)' }}>Remove</button>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)' }}>Remove this book from your shelf?</span>
               <button onClick={onRemove} style={{ ...pillBtnStyle('dark'), padding: '8px 18px', fontSize: 11, background: '#b05050' }}>Remove</button>
               <button onClick={() => setConfirmRemove(false)} style={{ ...pillBtnStyle('ghost'), padding: '8px 14px', fontSize: 11 }}>Cancel</button>
@@ -738,6 +765,7 @@ export default function App() {
   const [editBook, setEditBook] = useState<Book | null>(null)
   const [hoveredSpineId, setHoveredSpineId] = useState<string | null>(null)
   const shelfRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
     const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = loadPref('bookArchive.theme.v1', '')
@@ -805,7 +833,7 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
   const shelfOverflows = filteredBooks.length * (view === 'Covers' ? 228 : 66) > (typeof window !== 'undefined' ? window.innerWidth : 1200)|| groupMode === 'month'
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
       {/* Radial glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '20%', left: '30%', width: 600, height: 400, background: 'radial-gradient(ellipse,rgba(210,190,175,0.35),transparent 70%)', transform: 'translate(-50%,-50%)' }} />
@@ -813,9 +841,9 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
         <div style={{ position: 'absolute', bottom: '10%', left: '50%', width: 800, height: 300, background: 'radial-gradient(ellipse,rgba(200,180,165,0.2),transparent 70%)', transform: 'translateX(-50%)' }} />
       </div>
 
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
         {/* ── Header ── */}
-        <header style={{ padding: 'clamp(32px,4vw,48px) clamp(24px,5vw,64px) 28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <header style={{ padding: 'clamp(24px,4vw,48px) clamp(20px,5vw,64px) 24px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div>
             <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>A Personal Archive</div>
             <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(28px,3.5vw,44px)', fontWeight: 400, color: 'var(--text)', lineHeight: 1.1, marginBottom: 10 }}>
@@ -823,7 +851,7 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
             </h1>
             <AnimatedCount count={books.length} />
           </div>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, flexShrink: 0 }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: isMobile ? 0 : 16, flexShrink: 0 }}>
             <button onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--border)', background: 'var(--glass)', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
               {theme === 'dark'
                 ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -834,8 +862,8 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
         </header>
 
         {/* ── Filter bar + view toggle ── */}
-        <div style={{ padding: '0 clamp(24px,5vw,64px) 28px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ overflowX: 'auto', display: 'flex', gap: 8, scrollbarWidth: 'none', flex: 1 }}>
+        <div style={{ padding: '0 clamp(20px,5vw,64px) 24px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
+          <div style={{ overflowX: 'auto', display: 'flex', gap: 8, scrollbarWidth: 'none', flex: '1 1 260px', minWidth: 0, WebkitOverflowScrolling: 'touch' }}>
             {GENRES.map(g => (
               <button key={g} onClick={() => setActiveGenre(g)} style={{ ...pillBtnStyle(activeGenre === g ? 'dark' : 'glass'), padding: '8px 18px', flexShrink: 0, opacity: books.length === 0 ? 0.4 : 1, background: activeGenre === g ? 'var(--chip-active-bg)' : 'var(--glass)', color: activeGenre === g ? 'var(--chip-active-text)' : 'var(--text)' }}>{g}</button>
             ))}
@@ -845,7 +873,7 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
 
                 {/* ── Sort + By month ── */}
         {books.length > 0 && (
-          <div style={{ padding: '0 clamp(24px,5vw,64px) 20px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ padding: '0 clamp(20px,5vw,64px) 20px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <button onClick={() => setSortOrder(o => o === 'newest' ? 'oldest' : 'newest')} style={{ ...pillBtnStyle('glass'), padding: '6px 14px', fontSize: 12 }}>
               {sortOrder === 'newest' ? 'Newest first ↓' : 'Oldest first ↑'}
             </button>
@@ -870,7 +898,7 @@ useEffect(() => { try { localStorage.setItem(VIEW_KEY, view) } catch {} }, [view
           {filteredBooks.length === 0 ? (
             <EmptyShelf genre={activeGenre} onAdd={() => setShowModal(true)} />
           ) : (
-            <div ref={shelfRef} style={{ overflowX: groupMode === 'month' ? 'visible' : shelfOverflows ? 'auto' : 'visible', display: 'flex', flexDirection: groupMode === 'month' ? 'column' : 'row', gap: groupMode === 'month' ? 56 : view === 'Covers' ? 28 : 0, alignItems: groupMode === 'month' ? 'stretch' : 'flex-end', padding: `0 clamp(24px,5vw,64px) 0`, scrollbarWidth: 'thin' }}>
+            <div ref={shelfRef} style={{ overflowX: groupMode === 'month' ? 'visible' : shelfOverflows ? 'auto' : 'visible', display: 'flex', flexDirection: groupMode === 'month' ? 'column' : 'row', gap: groupMode === 'month' ? 56 : view === 'Covers' ? 28 : 0, alignItems: groupMode === 'month' ? 'stretch' : 'flex-end', padding: `0 clamp(20px,5vw,64px) 0`, scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
                            {(groupMode === 'month' ? groups : [{ key: 'all', label: '', books: filteredBooks }]).map(g => (
                 <div key={g.key} ref={el => { groupRefs.current[g.key] = el }} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, scrollMarginTop: 24 }}>
                   {groupMode === 'month' && (
