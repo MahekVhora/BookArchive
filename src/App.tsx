@@ -499,9 +499,9 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Preview</span>
             </div>
 
-            {/* Fields */}
+                        {/* Fields */}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {!manual
+              {!manual && (
                 <div style={{ position: 'relative' }}>
                   <input placeholder="Search by title or author" value={query} onChange={e => handleQueryChange(e.target.value)} style={inputStyle} autoFocus />
                   {searching && <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--text-muted)' }}>…</div>}
