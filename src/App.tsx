@@ -488,9 +488,9 @@ function AddBookModal({ onClose, onAdd, initialBook }: {
         {/* Scrollable body */}
         <div ref={bodyRef} style={{ overflowY: 'auto', overflowX: 'hidden', padding: `0 ${padX}px`, flex: 1, minHeight: 0, scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : undefined, gap: isMobile ? 20 : 24 }}>
+            
             {/* Preview */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0, alignSelf: isMobile ? 'center' : undefined }}>
-              {coverUrl ? (
               {coverUrl ? (
                 <img src={coverUrl} alt="preview" style={{ width: previewW, height: previewH, objectFit: 'cover', borderRadius: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }} />
               ) : (
